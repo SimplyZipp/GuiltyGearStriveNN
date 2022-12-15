@@ -39,7 +39,7 @@ class FrameGrabber:
 
         # Maybe normalize the image somehow?
         self.transform = A.Compose(
-            [A.resize(self.size, interpolation=cv2.INTER_AREA),
+            [A.Resize(*self.size, interpolation=cv2.INTER_AREA),
              ToTensorV2()]
         )
 
@@ -104,7 +104,7 @@ class GameManager:
         self.gamepad.update()
 
     def buttonr(self, inp):
-        self.button(inp)
+        self.button(inp[:-1])
 
     def GetPtrAddr(self, base, offsets):
         addr = self.pm.read_longlong(base)
@@ -152,7 +152,7 @@ class GameManager:
         player1taken = False
         player2taken = False
         side = 0
-        time.sleep(5)
+        time.sleep(2)
         gamepad.reset()
         gamepad.update()
         for i in players:
@@ -189,12 +189,19 @@ class GameManager:
             self.buttonr("kickr")
         time.sleep(2)
         # close the option select
+        self.button("hslash")
+        time.sleep(.1)
+        self.buttonr("hslashr")
+        time.sleep(.1)
         self.button("slash")
         time.sleep(.1)
         self.buttonr("slashr")
+
         self.dpad(2)
         time.sleep(5)  # open button settings and go to the bottom
         self.dpad(8)
+
+
         time.sleep(.05)
         self.dpad(5)
         time.sleep(.05)
@@ -214,6 +221,7 @@ class GameManager:
         if enemytype == "cpu":
             self.character_select(enemynum, (side % 2) + 1)
         # move onto the main loop
+
 
     def character_select(self, charanum, side):
         pm = self.pm

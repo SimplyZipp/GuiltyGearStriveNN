@@ -27,26 +27,41 @@ def main():
 
     timer = utils.SimpleTimer(0.1)
     screen = utils.FrameGrabber(size=size)
+    game = utils.GameManager()
 
     while True:
         # Training loop
         past_frames = torch.zeros((nstack, *size))
 
-        start_game()  # TODO
+        print("Starting game...")
+
+        # TODO: start_game()
+        game.initloop(18, 'cpu', 18)  # No idea which character. Also, does this start the game?
+
+        # Wait for game to start
+        started = False
+        while not started:
+            img = screen.color_img()
+            started = game.MatchStart(img)
 
         total_entropy = 0
+        prev_actions = (14, 14)
+        prev_stats = game.getcurrentstats()
+
+        print('Game started, playing game')
         timer.start()
-        while game_running:  # TODO: Get this from final reward?
+        while not game.MatchEnd():  # TODO: Get this from final reward?
             # Game loop
             past_frames[0] = screen.frame()
             action, log_prob, entropy, value = model.get_action(past_frames)
-            send_action(action)  # TODO
+            #send_action(action)  # TODO
 
             past_frames = torch.roll(past_frames, 1, dims=0)
             total_entropy += entropy
 
             timer.wait_and_continue()
-            reward = get_reward()  # TODO
+            #reward = get_reward()  # TODO
+            reward=0
             mem.add(action, log_prob, value, reward)
 
         mem.entropy = total_entropy
@@ -74,6 +89,10 @@ def mainv2():
     timer = utils.SimpleTimer(0.1)
     screen = utils.FrameGrabber(size=size)
     game = utils.GameManager()
+
+    delay = 5
+    print(f'Starting in {delay} seconds')
+    time.sleep(delay)
 
     while True:
         # Training loop

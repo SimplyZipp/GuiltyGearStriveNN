@@ -27,11 +27,11 @@ def get_feature_size(input_size, channel_in):
     :param channel_in:
     :return: Feature size
     """
-    with torch.no_grad:  # Just in case
-        x = torch.zeros((channel_in, *input_size))
-        fe = FeatureExtractor(channel_in)
-        x = fe(x)
-        return x.shape
+    #with torch.no_grad:  # Just in case
+    x = torch.zeros((channel_in, *input_size))
+    fe = FeatureExtractor(channel_in)
+    x = fe(x)
+    return x.shape
 
 
 class ConvBlock(nn.Module):
@@ -152,7 +152,7 @@ class A2C(nn.Module):
         super().__init__()
 
         feature_size = get_feature_size(image_size, channel_in)
-
+        feature_size = feature_size[0]
         self.encoder = FeatureExtractor(channel_in, device=device, dtype=dtype)
         self.actor = Actor(feature_size, nd_actions, actor_hidden_size, device=device, dtype=dtype)
         self.critic = Critic(feature_size, device=device, dtype=dtype)
