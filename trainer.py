@@ -33,10 +33,10 @@ def GetPtrAddr(base, offsets):
 #the below offsets and base addresses may not work on a different system. Make sure it doesn't break the code if it can't detect a value (i.e. if you're in the main menu)
 def getcurrentstats():
     #these are the values at the current time t, unless it works differently on different systems, don't worry about changing
-    p2HP = pm.read_int(GetPtrAddr(pm.base_address + 0x4EC5F38, offsets=[0x130, 0x188, 0x6D8, 0x680, 0x1170]))
-    p1HP = pm.read_int(GetPtrAddr(pm.base_address + 0x4EC5F38, offsets = [0x130, 0x8, 0x2B0, 0x680, 0x1170]))
-    p1RISC = pm.read_int(GetPtrAddr(pm.base_address + 0x4EC5F38, offsets = [0x130, 0x188, 0x2A0, 0x6D8, 0xC754]))
-    p2RISC = pm.read_int(GetPtrAddr(pm.base_address + 0x4EC5F38, offsets = [0x130, 0x188, 0xC754]))
+    p2HP = pm.read_int(GetPtrAddr(pm.base_address + 0x0505E6B8, offsets=[0x138, 0x8, 0x6E0, 0x688, 0x1178]))
+    p1HP = pm.read_int(GetPtrAddr(pm.base_address + 0x0505E6B8, offsets = [0x138, 0x0, 0x6E0, 0x688, 0x1178]))
+    p1RISC = pm.read_int(GetPtrAddr(pm.base_address + 0x0505E6B8, offsets = [0x130, 0x8, 0x688, 0xC764]))
+    p2RISC = pm.read_int(GetPtrAddr(pm.base_address + 0x0505E6B8, offsets = [0x138, 0x8, 0x2A8, 0xC764]))
     #print("health P1:" + str(p1HP))
     #print("health P2: " + str(p2HP))
     #print("RISC P1: " + str(p1RISC))
