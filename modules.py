@@ -44,6 +44,7 @@ class ConvBlock(nn.Module):
         """
         super().__init__()
 
+        # Used for custom initialization, does nothing for now
         init_ = lambda x: x
 
         self.conv128 = nn.Sequential(
