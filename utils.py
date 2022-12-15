@@ -104,7 +104,8 @@ class GameManager:
         self.gamepad.update()
 
     def buttonr(self, inp):
-        self.button(inp[:-1])
+        self.gamepad.release_button(button=self.buttons[inp[:-1]])
+        self.gamepad.update()
 
     def GetPtrAddr(self, base, offsets):
         addr = self.pm.read_longlong(base)
@@ -192,6 +193,7 @@ class GameManager:
         self.button("hslash")
         time.sleep(.1)
         self.buttonr("hslashr")
+
         time.sleep(.1)
         self.button("slash")
         time.sleep(.1)
@@ -199,9 +201,8 @@ class GameManager:
 
         self.dpad(2)
         time.sleep(5)  # open button settings and go to the bottom
+
         self.dpad(8)
-
-
         time.sleep(.05)
         self.dpad(5)
         time.sleep(.05)
