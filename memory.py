@@ -21,6 +21,12 @@ class Memory:
         self.rewards.clear()
         self.entropy = None
 
+    def shift_rewards_left(self, fill=0):
+        end = len(self.rewards)-1
+        for i in range(end):
+            self.rewards[i] = self.rewards[i+1]
+        self.rewards[end] = fill
+
     def _zip(self):
         return zip(self.actions, self.log_probs, self.values, self.rewards)
 
