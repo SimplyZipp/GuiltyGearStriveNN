@@ -58,7 +58,7 @@ class FrameGrabber:
     def color_img(self):
         sct_img = self.sct.grab(self.bounds)
         img = np.array(sct_img)
-        # Might need to convert from BGR to RGB
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         return img
     
     
@@ -117,12 +117,12 @@ class GameManager:
     def MatchStart(self, pixels):  # use the color image from the main loop to determine if the match is starting
         count = 0
         for i in self.startpixels:
-            if (pixels[i[0], i[1]] == (255, 255, 255)):
+            if (pixels[i[1], i[0]] == (255, 255, 255)).all():
                 count = count + 1
             else:
                 break
         for i in self.antipixel:
-            if (pixels[i[0], i[1]] == (255, 255, 255)):
+            if (pixels[i[1], i[0]] == (255, 255, 255)).all():
                 break
             else:
                 count = count + 1
@@ -190,9 +190,6 @@ class GameManager:
             self.buttonr("kickr")
         time.sleep(2)
         # close the option select
-        self.button("hslash")
-        time.sleep(.1)
-        self.buttonr("hslashr")
 
         time.sleep(.1)
         self.button("slash")
@@ -231,10 +228,10 @@ class GameManager:
         while 1:  # this loop keeps on moving the selector right one until its on a character it knows
             if side == 1:
                 character = pm.read_int(
-                    self.GetPtrAddr(pm.base_address + 0x05072918, offsets=[0x118, 0x370, 0x410, 0x20, 0x29704]))
+                    self.GetPtrAddr(pm.base_address + 0x0505E6B8, offsets=[0x168, 0x20, 0x98, 0x1D0, 0x29704]))
             else:
                 character = pm.read_int(
-                    self.GetPtrAddr(pm.base_address + 0x04899B78, offsets=[0x358, 0x190, 0x310, 0xA8, 0x29704]))
+                    self.GetPtrAddr(pm.base_address + 0x0505E6B8, offsets=[0x208, 0x5E8, 0x658, 0x2E8, 0x29704]))
             if (character == 1 or character == 3):
                 break
             else:
@@ -263,10 +260,10 @@ class GameManager:
         while 1:  # moves the selector right again, but this time doesn't stop until its on the right character
             if side == 1:
                 character = pm.read_int(
-                    self.GetPtrAddr(pm.base_address + 0x05072918, offsets=[0x118, 0x370, 0x410, 0x20, 0x29704]))
+                    self.GetPtrAddr(pm.base_address + 0x0505E6B8, offsets=[0x168, 0x20, 0x98, 0x1D0, 0x29704]))
             else:
                 character = pm.read_int(
-                    self.GetPtrAddr(pm.base_address + 0x04899B78, offsets=[0x358, 0x190, 0x310, 0xA8, 0x29704]))
+                    self.GetPtrAddr(pm.base_address + 0x0505E6B8, offsets=[0x208, 0x5E8, 0x658, 0x2E8, 0x29704]))
             if (character == charanum):
                 break
             else:

@@ -85,6 +85,7 @@ class Trainer:
         self.save_every = save_every
         self.iterations = 0
 
+        self.model = model
         self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
 
         self.device = device
@@ -102,12 +103,15 @@ class Trainer:
         self.optimizer.zero_grad()
 
         loss = self.calc_a2c_loss(mem)
-        loss.backward()
+        loss.backward(retain_graph=False)
+
+        nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
 
         self.optimizer.step()
 
         # Reset memory for next game
         mem.reset()
+        self.model.actor.init_hidden_states()
 
         # Save model once in a while
         if self.iterations % self.save_every == 0:
@@ -127,9 +131,10 @@ class Trainer:
         critic_loss = torch.pow(advantage, 2).mean()
 
         # Detach advantage from the computation graph. It only acts as a scalar multiplier
-        actor_loss = (-advantage.detach() * torch.tensor(mem.log_probs, device=self.device, dtype=self.dtype)).mean()
+        log_probs = torch.tensor(mem.log_probs, device=self.device, dtype=self.dtype)
+        actor_loss = (-advantage.detach() * log_probs).mean()
 
-        loss = actor_loss + critic_loss * self.critic_coeff + entropy * self.entropy_coeff
+        loss = actor_loss + critic_loss * self.critic_coeff + entropy.mean() * self.entropy_coeff
         return loss
 
     def get_discounted_rewards(self, mem):
@@ -137,7 +142,8 @@ class Trainer:
         Calculate the future discounted rewards for all states
         :return: 1D Tensor
         """
-        rewards = torch.zeros(len(mem))
+        rewards = torch.zeros(len(mem),
+                              device=self.device, dtype=self.dtype)
         val = 0
         for i in reversed(range(len(mem))):
             _, _, value, reward = mem[i]

@@ -31,6 +31,7 @@ def get_feature_size(input_size, channel_in):
     x = torch.zeros((channel_in, *input_size))
     fe = FeatureExtractor(channel_in)
     x = fe(x)
+    del fe
     return x.shape
 
 
@@ -48,28 +49,31 @@ class ConvBlock(nn.Module):
         init_ = lambda x: x
 
         self.conv128 = nn.Sequential(
-            init_(nn.Conv2d(channel_in, 128, 3, padding=1, device=device, dtype=dtype)),
+            init_(nn.Conv2d(channel_in, 128, 3, stride=2, padding=1, device=device, dtype=dtype)),
             nn.LeakyReLU(),
             init_(nn.Conv2d(128, 128, 3, stride=2, padding=1, device=device, dtype=dtype)),
-            nn.LeakyReLU()
+            nn.LeakyReLU(),
+            nn.MaxPool2d(2, stride=2)
         )
         self.conv64 = nn.Sequential(
-            init_(nn.Conv2d(128, 64, 3, padding=1, device=device, dtype=dtype)),
+            init_(nn.Conv2d(128, 64, 3, stride=2, padding=1, device=device, dtype=dtype)),
             nn.LeakyReLU(),
             init_(nn.Conv2d(64, 64, 3, stride=2, padding=1, device=device, dtype=dtype)),
-            nn.LeakyReLU()
-        )
-        self.conv32 = nn.Sequential(
-            init_(nn.Conv2d(64, 32, 3, padding=1, device=device, dtype=dtype)),
             nn.LeakyReLU(),
-            init_(nn.Conv2d(32, 32, 3, stride=2, padding=1, device=device, dtype=dtype)),
-            nn.LeakyReLU()
+            nn.MaxPool2d(2, stride=2)
         )
+        # self.conv32 = nn.Sequential(
+        #     init_(nn.Conv2d(64, 32, 3, stride=2, padding=1, device=device, dtype=dtype)),
+        #     nn.LeakyReLU(),
+        #     init_(nn.Conv2d(32, 32, 3, stride=2, padding=1, device=device, dtype=dtype)),
+        #     nn.LeakyReLU(),
+        #     nn.MaxPool2d(3, stride=2)
+        # )
 
     def forward(self, x):
         x = self.conv128(x)
         x = self.conv64(x)
-        x = self.conv32(x)
+        #x = self.conv32(x)
 
         return torch.flatten(x)
 
@@ -82,6 +86,7 @@ class FeatureExtractor(nn.Module):
         super().__init__()
 
         self.conv = ConvBlock(channel_in, device=device, dtype=dtype)
+        #self.conv.requires_grad_(False)
 
     def forward(self, x):
         """
@@ -89,8 +94,7 @@ class FeatureExtractor(nn.Module):
         :param x: Tensor of shape (C_in, W, H)
         :return: Tensor of shape (32 * W_out * H_out)
         """
-        x = self.conv(x)
-        return x
+        return self.conv(x)
 
 
 class Actor(nn.Module):
@@ -107,14 +111,20 @@ class Actor(nn.Module):
 
         self.nd_actions = nd_actions
 
-        self.h0 = torch.zeros(hidden_size, dtype=dtype, device=device)
-        self.c0 = torch.zeros(hidden_size, dtype=dtype, device=device)
-
-        # self.h0.requires_grad=True  # Learn the initial state
-        # self.c0.requires_grad=True  # Learn the initial state
+        self.hidden_size = hidden_size
+        self.dtype=dtype
+        self.device = device
+        self.init_hidden_states()
 
         self.LSTM = nn.LSTMCell(in_size, hidden_size, device=device, dtype=dtype)
         self.linear = nn.Linear(hidden_size, nd_actions[1], device=device, dtype=dtype)
+
+    def init_hidden_states(self):
+        self.h0 = torch.zeros(self.hidden_size, dtype=self.dtype, device=self.device)
+        self.c0 = torch.zeros(self.hidden_size, dtype=self.dtype, device=self.device)
+
+        self.h0.requires_grad = False
+        self.c0.requires_grad = False
 
     def forward(self, x):
         """
@@ -126,9 +136,8 @@ class Actor(nn.Module):
         # hh = self.h0
         # cc = self.c0
         action_probs = torch.zeros(self.nd_actions, device=self.h0.device, dtype=self.h0.dtype)
-
         for i in range(self.nd_actions[0]):
-            self.h0, self.c0 = self.LSTM(x, self.h0, self.c0)
+            self.h0, self.c0 = self.LSTM(x, (self.h0, self.c0))
             action_probs[i] = self.linear(self.h0)
 
         return action_probs
@@ -163,7 +172,9 @@ class A2C(nn.Module):
         policy = self.actor(features)
         value = self.critic(features)
 
-        print(f"A2C Value output shape: {value.shape}")
+        #print(f'A2C Feature shape: {features.shape}')
+        #print(f'A2C Actor output shape: {policy.shape}')
+        #print(f"A2C Value output shape: {value.shape}")
 
         return policy, value
 
@@ -174,7 +185,6 @@ class A2C(nn.Module):
         :return: (action, log_prob, entropy, state value)
         """
         policy, value = self(state)
-
         action_probs = F.softmax(policy, dim=1)
         dist = Categorical(action_probs)
 
