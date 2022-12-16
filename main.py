@@ -151,7 +151,7 @@ def mainv2(load_path=None):
                 # Do some training to alleviate memory usage
                 iterations = 0
                 time.sleep(0.1)
-                final_reward, _ = game.get_reward(prev_stats, "Player 1")
+                final_reward, _ = game.get_reward(prev_stats, "Player 1", timeout)
                 quick_train(learner, mem, total_entropy, final_reward)
                 total_entropy = 0
 
