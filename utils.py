@@ -142,10 +142,7 @@ class GameManager:
     def MatchEnd(self):  # uses the HP values in memory to determine if the round has ended
         p1HP = self.pm.read_int(self.GetPtrAddr(self.pm.base_address + 0x0505E6B8, offsets=[0x138, 0x0, 0x6E0, 0x688, 0x1178]))
         p2HP = self.pm.read_int(self.GetPtrAddr(self.pm.base_address + 0x0505E6B8, offsets=[0x138, 0x8, 0x6E0, 0x688, 0x1178]))
-        if min(p1HP, p2HP) == 0:
-            return True
-        else:
-            return False
+        return min(p1HP, p2HP) == 0, p1HP > 0
 
     def initloop(self, charanum, enemytype, enemynum):  # for selecting a side and picking a character
         if enemytype != "cpu" and enemytype != "enemy":
@@ -441,13 +438,15 @@ class GameManager:
         stats = self.getcurrentstats()
         return self._getReward(*prev_stats, *stats, position), stats
 
-    def reset_and_rematch(self):
+    def reset(self):
         self.gamepad.reset()
         self.gamepad.update()
-        sleep(0.1)
-        self.button("kick")
-        sleep(0.1)
+
+    def try_rematch(self):
+        self.button('kick')
+        time.sleep(0.1)
         self.buttonr('kickr')
+        time.sleep(0.1)
 
     def getcurrentstats(self):
         pm = self.pm

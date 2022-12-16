@@ -111,6 +111,7 @@ def mainv2():
         while not started:
             img = screen.color_img()
             started = game.MatchStart(img)
+            game.try_rematch()
 
         total_entropy = 0
         prev_actions = (14, 14)
@@ -118,8 +119,9 @@ def mainv2():
         iterations = 0
 
         print('Game started, playing game')
+        match_end, winlose = 0, 0
         timer.start()
-        while not game.MatchEnd():
+        while not match_end:
             iterations += 1
             # Game loop
             past_frames[0] = screen.frame()
@@ -148,10 +150,10 @@ def mainv2():
                 total_entropy = 0
 
             timer.wait_and_continue()
+            match_end, winlose = game.MatchEnd()
 
-        quick_train(learner, mem, total_entropy, 0)
-        time.sleep(6)
-        game.reset_and_rematch()
+        quick_train(learner, mem, total_entropy, winlose * 20)
+        game.reset()
 
 
 def quick_train(learner, mem, total_entropy, final_reward=0):
