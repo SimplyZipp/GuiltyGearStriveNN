@@ -434,9 +434,9 @@ class GameManager:
             self.button("dash")
         sleep(frame)
 
-    def get_reward(self, prev_stats, position: str):
+    def get_reward(self, prev_stats, position: str, tiemout:
         stats = self.getcurrentstats()
-        return self._getReward(*prev_stats, *stats, position), stats
+        return self._getReward(*prev_stats, *stats, position, timeout), stats
 
     def reset(self):
         self.gamepad.reset()
