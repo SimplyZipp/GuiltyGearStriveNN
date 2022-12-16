@@ -121,6 +121,8 @@ def mainv2(load_path=None):
         print('Game started, playing game')
         match_end, winlose = 0, 0
         timer.start()
+        timeout = False #for the reward function
+        start_time = time.time() #for keeping track of the match length
         while not match_end:
             iterations += 1
             # Game loop
@@ -137,8 +139,11 @@ def mainv2(load_path=None):
 
             past_frames = torch.roll(past_frames, 1, dims=0).detach()
             total_entropy += entropy
-
-            reward, prev_stats = game.get_reward(prev_stats, "Player 1")
+            match_end, winlose = game.MatchEnd() #moved back here so it doesn't interfere with the case where too much time passes
+            if time.time() - start_time > 99: #may replace with a memory address in match_end later
+                timeout = True
+                match_end = True
+            reward, prev_stats = game.get_reward(prev_stats, "Player 1", timeout)
             mem.add(actions, log_prob.mean(), value, reward)
             prev_actions = actions
 
@@ -151,7 +156,6 @@ def mainv2(load_path=None):
                 total_entropy = 0
 
             timer.wait_and_continue()
-            match_end, winlose = game.MatchEnd()
 
         if winlose == 0:
             winlose = -1
