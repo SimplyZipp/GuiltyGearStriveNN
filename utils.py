@@ -471,17 +471,18 @@ class GameManager:
         Reward -= 20 * (p1HP == 0) * mult
         Reward += 20 * (p2HP == 0) * mult  # + 20 if you win a round, -20 if you lose
 
-        Reward += (prev_p1HP - p1HP) / 42 * mult
-        Reward -= (prev_p2HP - p2HP) / 42 * mult  # +1 point for every 10% damage dealt, max HP is 420
+        Reward -= (prev_p1HP - p1HP) / 42 * mult
+        Reward += (prev_p2HP - p2HP) / 42 * mult  # +1 point for every 10% damage dealt, max HP is 420
 
         Reward -= max(p1RISC - prev_p1RISC,
                       0) / 12800 * mult  # +1 point per bar of enemy RISC filled. Max RISC value is 12800.
-        Reward += max(p2RISC - prev_p2RISC,
+        Reward += p2RISC - prev_p2RISC,
                       0) / 12800 * mult  # if RISC goes below zero, then the enemy is being combo'd and not part of this case
-
+        Reward += min(p2RISC - prev_p2RISC, 0)/(12800) * (1 + mult) #get up to 6 points of reward for comboing an enemy from full risc to min risc
+        Reward += min(p1RISC - prev_p1RISC, 0)/(12800) * (1 - mult)
+        
         Reward -= 2 * (p1RISC == 12800) * mult
-        Reward += 2 * (
-                    p2RISC == 12800) * mult  # +2 if enemies RISC is full.if the RISC bar is full, really bad things can happen
+        Reward += 2 * (p2RISC == 12800) * mult  # +2 if enemies RISC is full.if the RISC bar is full, really bad things can happen
 
         Reward -= (p1RISC > prev_p1RISC) * (prev_p1RISC == 0) / 4
         Reward += (p2RISC > prev_p2RISC) * (prev_p2RISC == 0) / 4  # +.25 for winning neutral or okizeme
