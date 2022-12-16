@@ -461,7 +461,7 @@ class GameManager:
         # print("RISC P2: " + str(p2RISC))
         return p1HP, p2HP, p1RISC, p2RISC
 
-    def _getReward(self, prev_p1HP, prev_p2HP, prev_p1RISC, prev_p2RISC, p1HP, p2HP, p1RISC, p2RISC, position):
+    def _getReward(self, prev_p1HP, prev_p2HP, prev_p1RISC, prev_p2RISC, p1HP, p2HP, p1RISC, p2RISC, position, timeout):
         if (position == "Player 1"):  # change to whatever indicator we use to say whether the AI is player 1 or two
             mult = 1
         else:
@@ -470,6 +470,9 @@ class GameManager:
         # current reward function, can adjust values and add more cases to help improve the behavior of the actor
         Reward -= 20 * (p1HP == 0) * mult
         Reward += 20 * (p2HP == 0) * mult  # + 20 if you win a round, -20 if you lose
+        
+        if timeout == True:
+            Reward = sign(p1HP - p2HP) * mult * 10 #give a lower reward for winning by timeout
 
         Reward -= (prev_p1HP - p1HP) / 42 * mult
         Reward += (prev_p2HP - p2HP) / 42 * mult  # +1 point for every 10% damage dealt, max HP is 420
