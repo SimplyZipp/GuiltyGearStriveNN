@@ -104,6 +104,7 @@ class Trainer:
         self.optimizer.zero_grad()
 
         loss = self.calc_a2c_loss(mem)
+        print(f'Loss: {loss}')
         loss.backward(retain_graph=False)
 
         nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)

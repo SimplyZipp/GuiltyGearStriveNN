@@ -68,7 +68,7 @@ def main():
         mem.entropy = total_entropy
         learner.train(mem)
 
-def mainv2():
+def mainv2(load_path=None):
     device = torch.device('cpu')
     dtype = torch.float32
     if torch.cuda.is_available():
@@ -80,8 +80,11 @@ def mainv2():
     size = (128, 128)
     nstack = 4
 
-    # TODO: Load or create new model
+    # Load or create new model
+    model = None
     model = modules.A2C(size, nstack, (2, 15), actor_hidden_size=256, device=device, dtype=dtype)
+    if load_path is not None:
+        model.load_state_dict(torch.load(load_path))
     model.to(device=device, dtype=dtype)
 
     learner = trainer.Trainer(model, device=device, dtype=dtype)
@@ -95,16 +98,13 @@ def mainv2():
     print(f'Starting in {delay} seconds')
     time.sleep(delay)
 
-    game.initloop(0, 'cpu', 0)  # No idea which character. Also, does this start the game?
+    game.initloop(0, 'cpu', 0)  # Choose Sol as the character for both sides
     while True:
         # Training loop
         past_frames = torch.zeros((nstack, *size), device=device, dtype=dtype).detach()
 
 
         print("Starting game...")
-
-        # TODO: start_game()
-
 
         # Wait for game to start
         started = False
@@ -126,6 +126,7 @@ def mainv2():
             # Game loop
             past_frames[0] = screen.frame()
 
+            # Convert some calculations to half-precision to save memory
             with autocast():
                 actions, log_prob, entropy, value = model.get_action(past_frames)
 
@@ -152,6 +153,8 @@ def mainv2():
             timer.wait_and_continue()
             match_end, winlose = game.MatchEnd()
 
+        if winlose == 0:
+            winlose = -1
         quick_train(learner, mem, total_entropy, winlose * 20)
         game.reset()
 
@@ -166,72 +169,6 @@ def quick_train(learner, mem, total_entropy, final_reward=0):
 
     end_time = time.time()
     print(f'Training iteration finished. Elapsed time: {end_time - start_time}')
-
-import random
-def mainv2_psuedo():
-    device = torch.device('cpu')
-    dtype = torch.float32
-    if torch.cuda.is_available():
-        print('CUDA available')
-        device = torch.device('cuda')
-    else:
-        print('CUDA unavailable')
-
-    size = (128, 128)
-    nstack = 4
-
-    # TODO: Load or create new model
-    model = modules.A2C(size, nstack, (2, 15), actor_hidden_size=256, device=device, dtype=dtype)
-    model.to(device=device, dtype=dtype)
-
-    learner = trainer.Trainer(model, device=device, dtype=dtype)
-    mem = memory.Memory()
-
-    timer = utils.SimpleTimer(0.1)
-    screen = utils.FrameGrabber(size=size)
-
-    delay = 2
-    print(f'Starting in {delay} seconds')
-    time.sleep(delay)
-
-    while True:
-        # Training loop
-        past_frames = torch.zeros((nstack, *size), device=device, dtype=dtype).detach()
-
-
-        print("Starting game...")
-
-        total_entropy = 0
-        it = 0
-
-        print('Game started, playing game')
-        timer.start()
-        while it < 99/0.1:
-            it+=1
-            # Game loop
-            past_frames[0] = screen.frame()
-
-            with autocast():
-                actions, log_prob, entropy, value = model.get_action(past_frames)
-
-            actions = (actions[0].item(), actions[1].item())
-
-            past_frames = torch.roll(past_frames, 1, dims=0).detach()
-            total_entropy += entropy
-
-            reward = random.randrange(-10, 10)
-            mem.add(actions, log_prob.mean(), value, reward)
-            timer.wait_and_continue()
-
-        print('Game finished, beginning training')
-        start_time = time.time()
-
-        mem.shift_rewards_left()
-        mem.entropy = total_entropy
-        learner.train(mem)
-
-        end_time = time.time()
-        print(f'Training iteration finished. Elapsed time: {end_time-start_time}')
 
 
 
