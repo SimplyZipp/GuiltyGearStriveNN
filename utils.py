@@ -115,13 +115,13 @@ class GameManager:
                 addr = self.pm.read_longlong(addr + i)
         return addr + offsets[-1]
     def pause(self):
-        button("pause")
+        self.button("pause")
         sleep(.4)
-        buttonr("pausea")
+        self.buttonr("pausea")
     def unpause(self):
-        button("pause")
-        sleep(.017)
-        buttonr("pauser)
+        self.button("pause")
+        sleep(.02)
+        self.buttonr("pauser")
     def MatchStart(self, pixels):  # use the color image from the main loop to determine if the match is starting
         count = 0
         for i in self.startpixels:

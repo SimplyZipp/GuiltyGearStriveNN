@@ -81,7 +81,7 @@ def mainv2():
     nstack = 4
 
     # TODO: Load or create new model
-    model = modules.A2C(size, nstack, (15, 2), actor_hidden_size=256, device=device, dtype=dtype)
+    model = modules.A2C(size, nstack, (2, 15), actor_hidden_size=256, device=device, dtype=dtype)
     model.to(device=device, dtype=dtype)
 
     learner = trainer.Trainer(model, device=device, dtype=dtype)
@@ -95,7 +95,7 @@ def mainv2():
     print(f'Starting in {delay} seconds')
     time.sleep(delay)
 
-    # game.initloop(0, 'cpu', 0)  # No idea which character. Also, does this start the game?
+    game.initloop(0, 'cpu', 0)  # No idea which character. Also, does this start the game?
     while True:
         # Training loop
         past_frames = torch.zeros((nstack, *size), device=device, dtype=dtype).detach()
@@ -107,18 +107,20 @@ def mainv2():
 
 
         # Wait for game to start
-        #started = False
-        #while not started:
-            #img = screen.color_img()
-            #started = game.MatchStart(img)
+        started = False
+        while not started:
+            img = screen.color_img()
+            started = game.MatchStart(img)
 
         total_entropy = 0
         prev_actions = (14, 14)
         prev_stats = game.getcurrentstats()
+        iterations = 0
 
         print('Game started, playing game')
         timer.start()
         while not game.MatchEnd():
+            iterations += 1
             # Game loop
             past_frames[0] = screen.frame()
 
@@ -136,17 +138,32 @@ def mainv2():
             reward, prev_stats = game.get_reward(prev_stats, "Player 1")
             mem.add(actions, log_prob.mean(), value, reward)
             prev_actions = actions
+
+            if iterations % 200 == 0:
+                # Pause the game and do some training to alleviate memory usage
+                iterations = 0
+                time.sleep(0.1)
+                final_reward, _ = game.get_reward(prev_stats, "Player 1")
+                game.pause()
+                quick_train(learner, mem, total_entropy, final_reward)
+                game.unpause()
+                total_entropy = 0
+
             timer.wait_and_continue()
 
-        print('Game finished, beginning training')
-        start_time = time.time()
+        quick_train(learner, mem, total_entropy, 0)
 
-        mem.shift_rewards_left()
-        mem.entropy = total_entropy
-        learner.train(mem)
 
-        end_time = time.time()
-        print(f'Training iteration finished. Elapsed time: {end_time-start_time}')
+def quick_train(learner, mem, total_entropy, final_reward=0):
+    print('Beginning training')
+    start_time = time.time()
+
+    mem.shift_rewards_left()
+    mem.entropy = total_entropy
+    learner.train(mem)
+
+    end_time = time.time()
+    print(f'Training iteration finished. Elapsed time: {end_time - start_time}')
 
 import random
 def mainv2_psuedo():
@@ -217,4 +234,4 @@ def mainv2_psuedo():
 
 
 if __name__ == '__main__':
-    mainv2_psuedo()
+    mainv2()
