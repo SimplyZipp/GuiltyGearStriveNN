@@ -87,7 +87,7 @@ def mainv2():
     learner = trainer.Trainer(model, device=device, dtype=dtype)
     mem = memory.Memory()
 
-    timer = utils.SimpleTimer(0.15)
+    timer = utils.SimpleTimer(0.2)
     screen = utils.FrameGrabber(size=size)
     game = utils.GameManager()
 
@@ -140,18 +140,18 @@ def mainv2():
             prev_actions = actions
 
             if iterations % 200 == 0:
-                # Pause the game and do some training to alleviate memory usage
+                # Do some training to alleviate memory usage
                 iterations = 0
                 time.sleep(0.1)
                 final_reward, _ = game.get_reward(prev_stats, "Player 1")
-                game.pause()
                 quick_train(learner, mem, total_entropy, final_reward)
-                game.unpause()
                 total_entropy = 0
 
             timer.wait_and_continue()
 
         quick_train(learner, mem, total_entropy, 0)
+        time.sleep(6)
+        game.reset_and_rematch()
 
 
 def quick_train(learner, mem, total_entropy, final_reward=0):

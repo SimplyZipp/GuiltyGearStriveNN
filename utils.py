@@ -441,6 +441,14 @@ class GameManager:
         stats = self.getcurrentstats()
         return self._getReward(*prev_stats, *stats, position), stats
 
+    def reset_and_rematch(self):
+        self.gamepad.reset()
+        self.gamepad.update()
+        sleep(0.1)
+        self.button("kick")
+        sleep(0.1)
+        self.buttonr('kickr')
+
     def getcurrentstats(self):
         pm = self.pm
         # these are the values at the current time t, unless it works differently on different systems, don't worry about changing

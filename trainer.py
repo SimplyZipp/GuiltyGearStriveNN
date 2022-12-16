@@ -75,13 +75,14 @@ import time
 
 
 class Trainer:
-    def __init__(self, model, lr=1e-3, gamma=0.99, critic_coeff=0.5, entropy_coeff=0.001, save_every=10, device='cpu', dtype=torch.float32):
+    def __init__(self, model, lr=1e-3, gamma=0.99, critic_coeff=0.5, entropy_coeff=0.001, save_every=20, device='cpu', dtype=torch.float32):
         self.lr = lr
 
         self.gamma = gamma
         self.critic_coeff = critic_coeff
         self.entropy_coeff = entropy_coeff
 
+        self.saveid = 0
         self.save_every = save_every
         self.iterations = 0
 
@@ -115,7 +116,8 @@ class Trainer:
 
         # Save model once in a while
         if self.iterations % self.save_every == 0:
-            # TODO: Save model
+            torch.save(self.model.state_dict(), f'./../models/a2c_autosave_{self.saveid}.pt')
+            self.saveid += 1
             self.iterations = 0
         self.iterations += 1
 
