@@ -90,7 +90,8 @@ class GameManager:
                                   "slash": vg.DS4_BUTTONS.DS4_BUTTON_TRIANGLE,
                                   "hslash": vg.DS4_BUTTONS.DS4_BUTTON_CIRCLE, #also acts as exit
                                   "dust": vg.DS4_BUTTONS.DS4_BUTTON_TRIGGER_RIGHT,
-                                  "dash": vg.DS4_BUTTONS.DS4_BUTTON_THUMB_LEFT}
+                                  "dash": vg.DS4_BUTTONS.DS4_BUTTON_THUMB_LEFT,
+                                 "pause": vg.DS4_BUTTONS.DS4_BUTTON_OPTIONS}
 
         self.pm = Pymem('GGST-Win64-Shipping.exe')
         self.gamepad = vg.VDS4Gamepad()
@@ -113,7 +114,14 @@ class GameManager:
             if i != offsets[-1]:
                 addr = self.pm.read_longlong(addr + i)
         return addr + offsets[-1]
-
+    def pause(self):
+        button("pause")
+        sleep(.4)
+        buttonr("pausea")
+    def unpause(self):
+        button("pause")
+        sleep(.017)
+        buttonr("pauser)
     def MatchStart(self, pixels):  # use the color image from the main loop to determine if the match is starting
         count = 0
         for i in self.startpixels:
