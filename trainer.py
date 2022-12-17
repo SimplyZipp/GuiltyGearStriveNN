@@ -75,7 +75,7 @@ import time
 
 
 class Trainer:
-    def __init__(self, model, lr=1e-3, gamma=0.99, critic_coeff=0.5, entropy_coeff=0.001, save_every=20, device='cpu', dtype=torch.float32):
+    def __init__(self, model, lr=1e-4, gamma=0.8, critic_coeff=0.8, entropy_coeff=0.05, save_every=10, device='cpu', dtype=torch.float32):
         self.lr = lr
 
         self.gamma = gamma
@@ -107,7 +107,7 @@ class Trainer:
         print(f'Loss: {loss}')
         loss.backward(retain_graph=False)
 
-        nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
+        #nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
 
         self.optimizer.step()
 
@@ -117,7 +117,7 @@ class Trainer:
 
         # Save model once in a while
         if self.iterations % self.save_every == 0:
-            torch.save(self.model.state_dict(), f'./../models/a2c_autosave_{self.saveid}.pt')
+            torch.save(self.model.state_dict(), f'./../models/a2c_autosave_{self.saveid % 10}.pt')
             self.saveid += 1
             self.iterations = 0
         self.iterations += 1

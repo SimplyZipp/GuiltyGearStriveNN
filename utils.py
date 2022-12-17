@@ -434,7 +434,7 @@ class GameManager:
             self.button("dash")
         sleep(frame)
 
-    def get_reward(self, prev_stats, position: str, tiemout:
+    def get_reward(self, prev_stats, position: str, timeout):
         stats = self.getcurrentstats()
         return self._getReward(*prev_stats, *stats, position, timeout), stats
 
@@ -466,16 +466,17 @@ class GameManager:
             mult = 1
         else:
             mult = -1
-        Reward = 0
+        Reward = 0  # Time penalty
+
         # current reward function, can adjust values and add more cases to help improve the behavior of the actor
         Reward -= 20 * (p1HP == 0) * mult
         Reward += 20 * (p2HP == 0) * mult  # + 20 if you win a round, -20 if you lose
-        
+
         if timeout == True:
             Reward = np.sign(p1HP - p2HP) * mult * 10 #give a lower reward for winning by timeout
 
-        Reward -= (prev_p1HP - p1HP) / 42 * mult
-        Reward += (prev_p2HP - p2HP) / 42 * mult  # +1 point for every 10% damage dealt, max HP is 420
+        Reward -= ((prev_p1HP - p1HP) / 42) * mult * 1.5
+        Reward += ((prev_p2HP - p2HP) / 42) * mult * 3 # +1 point for every 10% damage dealt, max HP is 420
 
         Reward -= max(p1RISC - prev_p1RISC,
                       0) / 12800 * mult  # +1 point per bar of enemy RISC filled. Max RISC value is 12800.
@@ -483,7 +484,7 @@ class GameManager:
                       0) / 12800 * mult  # if RISC goes below zero, then the enemy is being combo'd and not part of this case
         Reward += min(p2RISC - prev_p2RISC, 0)/(12800) * (1 + mult) #get up to 6 points of reward for comboing an enemy from full risc to min risc
         Reward += min(p1RISC - prev_p1RISC, 0)/(12800) * (1 - mult)
-        
+
         Reward -= 2 * (p1RISC == 12800) * mult
         Reward += 2 * (p2RISC == 12800) * mult  # +2 if enemies RISC is full.if the RISC bar is full, really bad things can happen
 

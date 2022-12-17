@@ -27,7 +27,6 @@ def get_feature_size(input_size, channel_in):
     :param channel_in:
     :return: Feature size
     """
-    #with torch.no_grad:  # Just in case
     x = torch.zeros((channel_in, *input_size))
     fe = FeatureExtractor(channel_in)
     x = fe(x)
@@ -53,6 +52,7 @@ class ConvBlock(nn.Module):
             nn.LeakyReLU(),
             init_(nn.Conv2d(128, 128, 3, stride=2, padding=1, device=device, dtype=dtype)),
             nn.LeakyReLU(),
+            nn.BatchNorm2d(128),
             nn.MaxPool2d(2, stride=2)
         )
         self.conv64 = nn.Sequential(
@@ -60,6 +60,7 @@ class ConvBlock(nn.Module):
             nn.LeakyReLU(),
             init_(nn.Conv2d(64, 64, 3, stride=2, padding=1, device=device, dtype=dtype)),
             nn.LeakyReLU(),
+            nn.BatchNorm2d(64),
             nn.MaxPool2d(2, stride=2)
         )
         # self.conv32 = nn.Sequential(
@@ -94,7 +95,7 @@ class FeatureExtractor(nn.Module):
         :param x: Tensor of shape (C_in, W, H)
         :return: Tensor of shape (32 * W_out * H_out)
         """
-        return self.conv(x)
+        return self.conv(x.unsqueeze(0))
 
 
 class Actor(nn.Module):
@@ -117,7 +118,11 @@ class Actor(nn.Module):
         self.init_hidden_states()
 
         self.LSTM = nn.LSTMCell(in_size, hidden_size, device=device, dtype=dtype)
-        self.linear = nn.Linear(hidden_size, nd_actions[1], device=device, dtype=dtype)
+        self.linear = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size, device=device, dtype=dtype),
+            nn.ReLU(),
+            nn.Linear(hidden_size, nd_actions[1], device=device, dtype=dtype)
+        )
 
     def init_hidden_states(self):
         self.h0 = torch.zeros(self.hidden_size, dtype=self.dtype, device=self.device)
@@ -149,7 +154,9 @@ class Critic(nn.Module):
 
         # Can be modified
         self.model = nn.Sequential(
-            nn.Linear(in_size, 1, device=device, dtype=dtype)
+            nn.Linear(in_size, 256, device=device, dtype=dtype),
+            nn.ReLU(),
+            nn.Linear(256, 1, device=device, dtype=dtype)
         )
 
     def forward(self, x):

@@ -82,7 +82,7 @@ def mainv2(load_path=None):
 
     # Load or create new model
     model = None
-    model = modules.A2C(size, nstack, (2, 15), actor_hidden_size=256, device=device, dtype=dtype)
+    model = modules.A2C(size, nstack, (2, 15), actor_hidden_size=1024, device=device, dtype=dtype)
     if load_path is not None:
         model.load_state_dict(torch.load(load_path))
     model.to(device=device, dtype=dtype)
@@ -147,7 +147,8 @@ def mainv2(load_path=None):
             mem.add(actions, log_prob.mean(), value, reward)
             prev_actions = actions
 
-            if iterations % 200 == 0:
+            print(f'Iteration: {iterations} | Reward: {reward}')
+            if iterations % 120 == 0:
                 # Do some training to alleviate memory usage
                 iterations = 0
                 time.sleep(0.1)
@@ -157,8 +158,8 @@ def mainv2(load_path=None):
 
             timer.wait_and_continue()
 
-        if winlose == 0:
-            winlose = -1
+        #if winlose == 0:
+            #winlose = -1
         quick_train(learner, mem, total_entropy, winlose * 20)
         game.reset()
 
@@ -167,7 +168,7 @@ def quick_train(learner, mem, total_entropy, final_reward=0):
     print('Beginning training')
     start_time = time.time()
 
-    mem.shift_rewards_left()
+    mem.shift_rewards_left(final_reward)
     mem.entropy = total_entropy
     learner.train(mem)
 
